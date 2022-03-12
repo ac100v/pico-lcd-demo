@@ -67,29 +67,25 @@ impl AnimationController {
                     self.loopend = false;
                 }
             }
+        } else if beat_count <= 20 {
+            // A: still
+            self.rot = 0;
+            self.scl = 100;
+            self.loopend = false;
+        } else if beat_count <= 36 {
+            // 'I am not an atomic playboy'
+            // B: rotate
+            self.rot += 1;
+        } else if beat_count <= 49 {
+            // C: rotate + unzoom
+            self.rot += 1;
+            self.scl += 2;
+        } else if self.scl > 0 {
+            // D: rotate + zoom
+            self.rot += 1;
+            self.scl -= 16;
         } else {
-            if beat_count <= 20 {
-                // A: still
-                self.rot = 0;
-                self.scl = 100;
-                self.loopend = false;
-            } else if beat_count <= 36 {
-                // 'I am not an atomic playboy'
-                // B: rotate
-                self.rot += 1;
-            } else if beat_count <= 49 {
-                // C: rotate + unzoom
-                self.rot += 1;
-                self.scl += 2;
-            } else {
-                if self.scl > 0 {
-                    // D: rotate + zoom
-                    self.rot += 1;
-                    self.scl -= 16;
-                } else {
-                    self.loopend = true;
-                }
-            }
+            self.loopend = true;
         }
     }
 }
@@ -219,6 +215,7 @@ fn main() -> ! {
 
     let mut ani = AnimationController::new();
 
+    let mut time_counter = mydelay.get_counter();
     loop {
         let beat_count;
         unsafe {
@@ -236,7 +233,7 @@ fn main() -> ! {
         // draw the Rust logo to LCD
         for p in 0..8 {
             let mut d: [u8; 128] = [0; 128];
-            for x in 0..128 as usize {
+            for (x, item) in d.iter_mut().enumerate() {
                 let mut dat = 0;
                 for dy in 0..8 {
                     let y = ((p * 8 + dy) & 0x7f) as usize;
@@ -246,12 +243,12 @@ fn main() -> ! {
                         dat |= 1 << dy;
                     }
                 }
-                d[x] = dat;
+                *item = dat;
             }
             lcd.set_page(p);
             lcd.write_data(&d);
         }
-        // In release build, some wait may be needed here...
-        // mydelay.delay_us(10_000);
+        time_counter += 1_000_000 / 60; // 60 fps
+        mydelay.wait_counter(time_counter);
     }
 }

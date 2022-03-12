@@ -9,6 +9,14 @@ impl MyDelay {
     pub fn new(tmr: bsp::hal::Timer) -> Self {
         Self { tmr }
     }
+
+    pub fn get_counter(&self) -> u64 {
+        self.tmr.get_counter()
+    }
+
+    pub fn wait_counter(&self, tick: u64) {
+        while self.tmr.get_counter() < tick {}
+    }
 }
 
 impl embedded_hal::blocking::delay::DelayUs<u32> for MyDelay {
